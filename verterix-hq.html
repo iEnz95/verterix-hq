@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Verterix HQ</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+#topbar{height:48px;background:#0d0d1a;border-bottom:1px solid #1a1a30;display:flex;align-items:center;padding:0 16px;gap:14px;flex-shrink:0;z-index:10}
+.logo{font-size:17px;font-weight:800;color:#fff;letter-spacing:3px}.logo span{color:#6c63ff}
+.kpis{display:flex;gap:18px;margin-left:auto}
+.kpi .val{font-size:14px;font-weight:700;color:#6c63ff;text-align:center}
+.kpi .lbl{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;text-align:center}
+#settings-btn{background:#111128;border:1px solid #2a2a40;color:#888;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px}
+#settings-btn:hover{border-color:#6c63ff;color:#fff}
+#main{display:flex;flex:1;overflow:hidden}
+#canvas-wrap{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;color:#333;pointer-events:none;white-space:nowrap}
+#sidebar{width:300px;background:#0d0d1a;border-left:1px solid #1a1a30;display:flex;flex-direction:column;flex-shrink:0}
+#stabs{display:flex;border-bottom:1px solid #1a1a30}
+.stab{flex:1;padding:10px 0;text-align:center;font-size:10px;font-weight:700;color:#444;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .2s;border-bottom:2px solid transparent}
+.stab.active{color:#6c63ff;border-bottom-color:#6c63ff}
+.stab:hover{color:#aaa}
+#scontent{flex:1;overflow-y:auto;padding:10px}
+#scontent::-webkit-scrollbar{width:3px}
+#scontent::-webkit-scrollbar-thumb{background:#222}
+.acard{background:#111120;border:1px solid #1e1e30;border-radius:8px;padding:10px;margin-bottom:7px;cursor:pointer;transition:all .2s}
+.acard:hover,.acard.sel{border-color:#6c63ff;background:#13132a}
+.atop{display:flex;align-items:center;gap:8px}
+.aemoji{font-size:20px}
+.aname{font-size:12px;font-weight:700;color:#ddd}
+.arole{font-size:9px;color:#6c63ff;text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.adot{width:6px;height:6px;border-radius:50%;background:#2ecc71;margin-left:auto;flex-shrink:0}
+.atask{font-size:10px;color:#555;margin-top:5px;line-height:1.4}
+.msg{max-width:88%;padding:8px 11px;border-radius:10px;font-size:11px;line-height:1.5;margin-bottom:6px}
+.msg.u{background:#6c63ff;color:#fff;align-self:flex-end;margin-left:auto;border-bottom-right-radius:3px}
+.msg.a{background:#1a1a2e;color:#ddd;align-self:flex-start;border-bottom-left-radius:3px}
+#chat-wrap{display:flex;flex-direction:column;height:100%}
+#chat-hdr{padding:12px;border-bottom:1px solid #1a1a30;display:flex;align-items:center;gap:8px}
+#chat-hdr .ce{font-size:22px}
+#chat-hdr .cn{font-size:13px;font-weight:700;color:#fff}
+#chat-hdr .cr{font-size:9px;color:#6c63ff;text-transform:uppercase}
+#chat-hdr button{margin-left:auto;background:none;border:1px solid #2a2a40;color:#555;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:10px}
+#chat-hdr button:hover{border-color:#6c63ff;color:#fff}
+#chat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column}
+#chat-msgs::-webkit-scrollbar{width:3px}
+#chat-msgs::-webkit-scrollbar-thumb{background:#222}
+#chat-inp-wrap{padding:8px 10px;border-top:1px solid #1a1a30;display:flex;gap:6px}
+#chat-inp{flex:1;background:#111120;border:1px solid #1e1e30;color:#ddd;padding:7px 10px;border-radius:6px;font-size:11px;outline:none;resize:none;height:34px}
+#chat-inp:focus{border-color:#6c63ff}
+#chat-send{background:#6c63ff;border:none;color:#fff;padding:0 12px;border-radius:6px;cursor:pointer;font-size:14px}
+#chat-send:hover{background:#7c73ff}
+#chat-send:disabled{background:#222;cursor:default}
+.logitem{background:#111120;border-left:3px solid #6c63ff;padding:6px 9px;border-radius:0 5px 5px 0;font-size:10px;margin-bottom:5px}
+.logtime{color:#444;font-size:9px;margin-bottom:1px}
+.logmsg{color:#aaa}
+/* dashboard */
+.dkpi{background:#111120;border:1px solid #1e1e30;border-radius:8px;padding:11px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.dkpi-icon{font-size:22px}
+.dkpi-info{flex:1}
+.dkpi-val{font-size:17px;font-weight:800}
+.dkpi-lbl{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:1px}
+.dkpi-diff{font-size:9px;margin-top:2px}
+.dkpi-diff.up{color:#2ecc71}.dkpi-diff.dn{color:#e74c3c}.dkpi-diff.neu{color:#888}
+.dbar-wrap{background:#111120;border:1px solid #1e1e30;border-radius:8px;padding:11px 12px;margin-bottom:7px}
+.dbar-title{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:9px}
+.dbar-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.dbar-name{font-size:9px;color:#aaa;width:62px;flex-shrink:0}
+.dbar-track{flex:1;background:#1a1a2e;border-radius:3px;height:7px;overflow:hidden}
+.dbar-fill{height:100%;border-radius:3px;transition:width .6s}
+.dbar-num{font-size:9px;color:#777;width:36px;text-align:right;flex-shrink:0}
+.dedit-wrap{background:#111120;border:1px solid #1e1e30;border-radius:8px;padding:11px 12px;margin-bottom:7px}
+.dedit-title{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:9px}
+.dedit-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.dedit-lbl{font-size:10px;color:#aaa;flex:1}
+.dedit-inp{background:#0a0a15;border:1px solid #1e1e30;color:#ddd;padding:4px 8px;border-radius:5px;font-size:11px;width:90px;text-align:right;outline:none}
+.dedit-inp:focus{border-color:#6c63ff}
+.dedit-unit{font-size:10px;color:#555;width:16px}
+.dbtn{width:100%;background:#6c63ff;border:none;color:#fff;padding:7px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;margin-top:4px}
+.dbtn:hover{background:#7c73ff}
+.dprod{background:#111120;border:1px solid #1e1e30;border-radius:8px;padding:10px;margin-bottom:6px}
+.dprod-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.dprod-name{font-size:11px;font-weight:700;color:#ddd}
+.dprod-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700}
+.dprod-badge.attivo{background:#0d3d1a;color:#2ecc71}
+.dprod-badge.test{background:#1a1a0d;color:#f1c40f}
+.dprod-badge.stop{background:#2a0d0d;color:#e74c3c}
+.dprod-stats{display:flex;gap:12px}
+.dprod-stat{font-size:9px;color:#555}.dprod-stat span{color:#aaa}
+#settings-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center}
+#settings-modal.open{display:flex}
+#sbox{background:#111120;border:1px solid #2a2a40;border-radius:12px;padding:24px;width:380px;max-width:92vw}
+#sbox h3{font-size:15px;margin-bottom:14px;color:#fff}
+#sbox label{font-size:10px;color:#777;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px}
+#sbox input{width:100%;background:#0a0a15;border:1px solid #2a2a40;color:#ddd;padding:9px 11px;border-radius:6px;font-size:11px;outline:none;margin-bottom:4px}
+#sbox input:focus{border-color:#6c63ff}
+.ks{font-size:10px;margin-bottom:12px}.ks.ok{color:#2ecc71}.ks.no{color:#e74c3c}
+.sbtns{display:flex;gap:8px;margin-top:10px}
+.sbtns button{flex:1;padding:9px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;border:none}
+#bsave{background:#6c63ff;color:#fff}
+#bclose{background:#1e1e30;color:#999}
+#nametag{position:absolute;pointer-events:none;background:rgba(8,8,20,.92);border:1px solid #6c63ff;border-radius:7px;padding:5px 10px;font-size:10px;display:none;z-index:5}
+#nametag .nn{font-weight:700;color:#fff}
+#nametag .nr{color:#6c63ff;font-size:9px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">VERTE<span>RIX</span> HQ</div>
+  <div class="kpis">
+    <div class="kpi"><div class="val">€0</div><div class="lbl">Vendite</div></div>
+    <div class="kpi"><div class="val">12</div><div class="lbl">Agenti</div></div>
+    <div class="kpi"><div class="val">€63</div><div class="lbl">Budget Ads</div></div>
+    <div class="kpi"><div class="val">Fase 1</div><div class="lbl">Progetto</div></div>
+  </div>
+  <button id="settings-btn" onclick="openSettings()">⚙ API Key</button>
+</div>
+
+<div id="main">
+  <div id="canvas-wrap">
+    <canvas id="c"></canvas>
+    <div id="hint">🖱 Trascina per ruotare • Scroll per zoom • Click su un agente per chattare</div>
+    <div id="nametag"><div class="nn" id="nn"></div><div class="nr" id="nr"></div></div>
+  </div>
+  <div id="sidebar">
+    <div id="stabs">
+      <div class="stab active" id="t-team" onclick="switchTab('team')">Team</div>
+      <div class="stab" id="t-chat" onclick="switchTab('chat')">Chat</div>
+      <div class="stab" id="t-report" onclick="switchTab('report')">Report</div>
+      <div class="stab" id="t-log" onclick="switchTab('log')">Log</div>
+    </div>
+    <div id="scontent"></div>
+  </div>
+</div>
+
+<div id="settings-modal">
+  <div id="sbox">
+    <h3>⚙ Configurazione API</h3>
+    <label>Anthropic API Key</label>
+    <input type="password" id="akey" placeholder="sk-ant-..."/>
+    <div class="ks no" id="ks">Nessuna chiave configurata</div>
+    <label style="margin-top:10px">Shopify Token</label>
+    <input type="password" id="skey" placeholder="shpat_..."/>
+    <div class="ks no" id="ss">Nessun token Shopify</div>
+    <div class="sbtns">
+      <button id="bclose" onclick="closeSettings()">Annulla</button>
+      <button id="bsave" onclick="saveKey()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── AGENT DATA ───────────────────────────────────────────────────────────────
+const AGENTS = [
+  { id:'luca',      emoji:'👔', name:'Luca',        role:'CEO',
+    bc:0x1a237e, hc:0x1a0a00, sc:0xffd700,
+    tasks:'Decisioni strategiche autonome entro certi limiti. Per decisioni grandi chiede il tuo consenso.',
+    prompt:'Sei Luca, CEO di Verterix. Lavori in PIENA AUTONOMIA. Focus: vendere prodotti digitali AI (corsi, template, prompt pack). Contatti il fondatore SOLO per: (1) nuovo budget extra, (2) decisioni drastiche. Per tutto il resto decidi tu. IMPORTANTE: quando vuoi creare un nuovo prodotto su Shopify, includi nella risposta questo comando esatto (verrà eseguito automaticamente): CREA_PRODOTTO[Nome Prodotto|Descrizione breve del prodotto|prezzo] Esempio: CREA_PRODOTTO[Guida AI per Freelancer|Scopri come usare l\'AI per triplicare i tuoi clienti|27] Rispondi in italiano, diretto e operativo.' },
+  { id:'vale',      emoji:'⭐', name:'Vale',         role:'Assistente Personale',
+    bc:0x0d47a1, hc:0x5d2e00, sc:0x42a5f5,
+    tasks:'Assistente privata H24. Gestisce agenda, email personali, WhatsApp e chiamate. Filtra da Alba.',
+    prompt:'Sei Vale, assistente personale privata del fondatore di Verterix. Discreta, efficiente, H24. Gestisci agenda, email, WhatsApp, chiamate. Filtra i briefing di Alba. Rispondi in italiano, caldo e professionale.' },
+  { id:'alba',      emoji:'🌅', name:'Alba',         role:'Filtro Aziendale',
+    bc:0x1565c0, hc:0x0d0d0d, sc:0x64b5f6,
+    tasks:'Riceve comunicazioni aziendali esterne, le filtra e prepara briefing per Vale.',
+    prompt:'Sei Alba, filtro aziendale di Verterix. Ricevi email e messaggi aziendali, li analizzi e prepari briefing strutturati per Vale. Priorità: urgente/normale/bassa. Rispondi in italiano, sintetica.' },
+  { id:'giulia',    emoji:'📣', name:'Giulia',       role:'Marketing',
+    bc:0xb71c1c, hc:0x7b1515, sc:0xef5350,
+    tasks:'Strategia marketing, campagne Meta Ads (€63/mese), posizionamento brand Verterix.',
+    prompt:'Sei Giulia, marketing director di Verterix. Lavori in autonomia totale su ordine del CEO Luca. Gestisci campagne Meta Ads (budget €63/mese) ESCLUSIVAMENTE su prodotti legati all\'intelligenza artificiale: corsi AI, template AI, prompt pack, guide su ChatGPT/Claude. Crei le campagne, le ottimizzi e riferisci i risultati al CEO. Non chiedi mai conferma al fondatore. Rispondi in italiano con piani concreti e KPI.' },
+  { id:'marco',     emoji:'📱', name:'Marco',        role:'Social Media',
+    bc:0x4a148c, hc:0x1a0a2e, sc:0xab47bc,
+    tasks:'Instagram, TikTok, LinkedIn. Contenuti organici per portare traffico a Shopify.',
+    prompt:'Sei Marco, social media manager di Verterix. Lavori in autonomia totale su ordine del CEO Luca. Crei contenuti organici su TikTok, Instagram e LinkedIn ESCLUSIVAMENTE sul tema intelligenza artificiale: tutorial AI, tips su ChatGPT/Claude, dietro le quinte dei prodotti Verterix, trend AI. Obiettivo: portare traffico organico a Shopify. Non chiedi mai conferma al fondatore. Rispondi in italiano con idee di contenuto pronte da pubblicare.' },
+  { id:'marta',     emoji:'🎨', name:'Marta',        role:'Creativa',
+    bc:0xe65100, hc:0x8B6914, sc:0xff9800,
+    tasks:'Naming, copywriting, storytelling, identità visiva. Ha scelto il nome Verterix.',
+    prompt:'Sei Marta, creative director di Verterix. Lavori in autonomia totale su ordine del CEO Luca. Crei copy, naming, copertine e storytelling per i prodotti digitali AI di Verterix: corsi, template, guide sull\'intelligenza artificiale. Il tuo stile è premium ma accessibile, moderno, che ispira fiducia. Non chiedi mai conferma al fondatore. Rispondi in italiano con proposte creative pronte all\'uso.' },
+  { id:'davide',    emoji:'🤝', name:'Davide',       role:'Vendite',
+    bc:0x1b5e20, hc:0x2c1000, sc:0x66bb6a,
+    tasks:'Trova prodotti digitali, gestisce funnel vendita, ruota prodotti in 48h se non performano.',
+    prompt:'Sei Davide, sales manager di Verterix. Lavori in autonomia totale: identifichi prodotti digitali AI (corsi sull\'intelligenza artificiale, template AI, prompt pack, guide ChatGPT/Claude), li proponi al CEO Luca, li lanci e li ruoti in 48h se non vendono. Budget ads €63/mese. Tutto il focus è su prodotti legati all\'AI. Rispondi in italiano con analisi di mercato e azioni concrete.' },
+  { id:'roberto',   emoji:'💰', name:'Roberto',      role:'CFO',
+    bc:0x004d40, hc:0x808080, sc:0x26a69a,
+    tasks:'Budget max €100/mese: Shopify €27, Make €9, dominio €1, ads €63. Monitora ROI.',
+    prompt:'Sei Roberto, CFO di Verterix. Budget €100/mese: Shopify €27, Make.com €9, dominio €1, ads €63. Monitora ROI campagne e dai alert se il budget rischia di sforare. Rispondi in italiano con numeri precisi.' },
+  { id:'elena',     emoji:'👥', name:'Elena',        role:'HR',
+    bc:0x006064, hc:0x1a0a0a, sc:0x00acc1,
+    tasks:'Coordina processi tra agenti, ottimizza flussi di lavoro e cultura aziendale.',
+    prompt:'Sei Elena, HR manager di Verterix. Coordini agenti AI, processi interni e cultura aziendale. Ottimizzi i flussi tra reparti. Rispondi in italiano in modo organizzativo e propositivo.' },
+  { id:'bianchi',   emoji:'⚖️', name:'Avv. Bianchi', role:'Legale',
+    bc:0x37474f, hc:0xeeeeee, sc:0x90a4ae,
+    tasks:'GDPR, termini di servizio Shopify, contratti, tutela prodotti digitali.',
+    prompt:'Sei l\'Avvocato Bianchi, consulente legale di Verterix. GDPR e-commerce, termini di servizio, contratti, tutela prodotti digitali. Rispondi in italiano in modo chiaro, senza eccessivo legalese.' },
+  { id:'ferretti',  emoji:'🧠', name:'Dr. Ferretti',  role:'Psicologo',
+    bc:0x4a148c, hc:0x555555, sc:0xce93d8,
+    tasks:'Sblocca idee creative, supera blocchi mentali, sviluppa mindset imprenditoriale.',
+    prompt:'Sei il Dottor Ferretti, psicologo di Verterix. Aiuti il fondatore a sbloccare idee, superare blocchi e sviluppare mindset imprenditoriale. Usi coaching e psicologia positiva. Rispondi in italiano, empatico e motivante.' },
+  { id:'ale',       emoji:'💻', name:'Alessandro',   role:'CTO',
+    bc:0x1a237e, hc:0x111111, sc:0x5c6bc0,
+    tasks:'Stack tech: Shopify, Make.com, Vercel, GitHub (iEnz95), API Anthropic. Automatizza tutto.',
+    prompt:'Sei Alessandro, CTO di Verterix. Gestisci Shopify Basic, Make.com, Vercel, GitHub (iEnz95), API Anthropic. Stai costruendo il sistema agenti autonomi. Rispondi in italiano con soluzioni pratiche per chi ha poca esperienza tecnica.' },
+];
+
+// agent positions [x, z]  (y=0 = floor level)
+const POS = {
+  luca:    [ 9,  -7],
+  vale:    [-8,  -7],
+  alba:    [-4,  -7],
+  giulia:  [-9,   1],
+  marco:   [-5,   1],
+  marta:   [-9,   5],
+  davide:  [ 2,   1],
+  roberto: [ 6,   1],
+  elena:   [-9,   9],
+  bianchi: [-5,   9],
+  ferretti:[ 2,   9],
+  ale:     [ 6,   9],
+};
+
+// ── SCENE ───────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const wrap   = document.getElementById('canvas-wrap');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a14);
+scene.fog = new THREE.Fog(0x0a0a14, 35, 70);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.set(0, 18, 26);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 6;
+controls.maxDistance = 45;
+controls.maxPolarAngle = Math.PI / 2.1;
+controls.target.set(0, 1, 2);
+controls.update();
+
+// ── LIGHTING ────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x8888bb, 0.6));
+
+const sun = new THREE.DirectionalLight(0xfff5e0, 1.2);
+sun.position.set(10, 20, 10);
+sun.castShadow = true;
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 80;
+sun.shadow.camera.left = -25;
+sun.shadow.camera.right = 25;
+sun.shadow.camera.top = 25;
+sun.shadow.camera.bottom = -25;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.001;
+scene.add(sun);
+
+// zone fill lights
+const addPoint = (x, y, z, color, intensity, dist) => {
+  const l = new THREE.PointLight(color, intensity, dist);
+  l.position.set(x, y, z);
+  scene.add(l);
+};
+addPoint(9, 5, -7, 0xffd700, 1.2, 12);   // CEO gold
+addPoint(-6, 5, -7, 0x4488ff, 0.9, 12);  // secretaries blue
+addPoint(-4, 5, 4,  0x8866ff, 0.6, 20);  // open space purple
+addPoint(5,  5, 4,  0x6699ff, 0.6, 20);
+
+// ── MATERIALS ────────────────────────────────────────────────────────────────
+const floorMat = (color, rough = 0.8) =>
+  new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0.05 });
+
+// ── OFFICE GEOMETRY ──────────────────────────────────────────────────────────
+function addBox(sx, sy, sz, x, y, z, mat, shadow = true) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
+  m.position.set(x, y, z);
+  if (shadow) { m.castShadow = true; m.receiveShadow = true; }
+  scene.add(m);
+  return m;
+}
+
+// Main floor
+const floorGeo = new THREE.PlaneGeometry(32, 28, 32, 28);
+const floorM = new THREE.MeshStandardMaterial({ color: 0x0e0e1a, roughness: 0.9 });
+const floor = new THREE.Mesh(floorGeo, floorM);
+floor.rotation.x = -Math.PI / 2;
+floor.position.set(0, 0, 2);
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Floor tile grid lines using EdgesGeometry feel — use a grid helper instead
+const grid = new THREE.GridHelper(32, 32, 0x1a1a2e, 0x111122);
+grid.position.set(0, 0.01, 2);
+scene.add(grid);
+
+// CEO office carpet
+const ceoCarpet = new THREE.Mesh(new THREE.PlaneGeometry(8, 6),
+  new THREE.MeshStandardMaterial({ color: 0x1a1500, roughness: 0.95 }));
+ceoCarpet.rotation.x = -Math.PI / 2;
+ceoCarpet.position.set(9, 0.02, -7);
+ceoCarpet.receiveShadow = true;
+scene.add(ceoCarpet);
+
+// Secretary carpet
+const secCarpet = new THREE.Mesh(new THREE.PlaneGeometry(10, 6),
+  new THREE.MeshStandardMaterial({ color: 0x001520, roughness: 0.95 }));
+secCarpet.rotation.x = -Math.PI / 2;
+secCarpet.position.set(-6, 0.02, -7);
+secCarpet.receiveShadow = true;
+scene.add(secCarpet);
+
+// Marketing cluster carpet
+const mkCarpet = new THREE.Mesh(new THREE.PlaneGeometry(8, 9),
+  new THREE.MeshStandardMaterial({ color: 0x0e0816, roughness: 0.95 }));
+mkCarpet.rotation.x = -Math.PI / 2;
+mkCarpet.position.set(-7, 0.02, 3.5);
+mkCarpet.receiveShadow = true;
+scene.add(mkCarpet);
+
+// Sales/Finance cluster carpet
+const saleCarpet = new THREE.Mesh(new THREE.PlaneGeometry(8, 9),
+  new THREE.MeshStandardMaterial({ color: 0x061108, roughness: 0.95 }));
+saleCarpet.rotation.x = -Math.PI / 2;
+saleCarpet.position.set(5, 0.02, 3.5);
+saleCarpet.receiveShadow = true;
+scene.add(saleCarpet);
+
+// Ops / Tech cluster carpet
+const opsCarpet = new THREE.Mesh(new THREE.PlaneGeometry(18, 5),
+  new THREE.MeshStandardMaterial({ color: 0x080d10, roughness: 0.95 }));
+opsCarpet.rotation.x = -Math.PI / 2;
+opsCarpet.position.set(-1, 0.02, 9);
+opsCarpet.receiveShadow = true;
+scene.add(opsCarpet);
+
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.9 });
+const wallMatCEO = new THREE.MeshStandardMaterial({ color: 0x1a1500, roughness: 0.85 });
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x2244aa, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.25 });
+
+// Back wall
+addBox(34, 6, 0.3, 0, 3, -11, wallMat);
+// Left wall
+addBox(0.3, 6, 28, -16, 3, 2, wallMat);
+// Right wall
+addBox(0.3, 6, 28, 16, 3, 2, wallMat);
+
+// CEO office glass walls
+addBox(8, 4, 0.15, 9, 2, -3.5, glassMat);   // front glass
+addBox(0.15, 4, 7, 5, 2, -7, glassMat);       // left glass
+// CEO label on wall
+addBox(8, 0.15, 0.15, 9, 4.1, -3.5, new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.5 }), false);
+
+// Secretary room glass walls
+addBox(10, 4, 0.15, -6, 2, -3.5, glassMat);
+addBox(0.15, 4, 7, -1, 2, -7, glassMat);
+addBox(10, 0.15, 0.15, -6, 4.1, -3.5, new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x4488ff, emissiveIntensity: 0.4 }), false);
+
+// Cluster dividers (low partition walls)
+const partMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9 });
+addBox(0.1, 1.5, 14, 0, 0.75, 4, partMat);  // vertical divider open space
+addBox(20, 0.1, 0.1, -1, 1.5, -1, partMat); // horizontal top of open space
+
+// ── DESK FUNCTION ────────────────────────────────────────────────────────────
+function createDesk(glowColor, isBig = false) {
+  const g = new THREE.Group();
+  const W = isBig ? 2.0 : 1.4, D = isBig ? 1.0 : 0.75;
+
+  const topMat = new THREE.MeshStandardMaterial({ color: 0x1a1008, roughness: 0.3, metalness: 0.1 });
+  const top = new THREE.Mesh(new THREE.BoxGeometry(W, 0.07, D), topMat);
+  top.position.y = 0.75; top.castShadow = true; top.receiveShadow = true;
+  g.add(top);
+
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4, metalness: 0.6 });
+  [[W/2-0.08, D/2-0.08], [W/2-0.08, -D/2+0.08], [-W/2+0.08, D/2-0.08], [-W/2+0.08, -D/2+0.08]].forEach(([lx, lz]) => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.72, 8), legMat);
+    leg.position.set(lx, 0.36, lz); leg.castShadow = true;
+    g.add(leg);
+  });
+
+  // monitor
+  const screenMat = new THREE.MeshStandardMaterial({ color: 0x080814, emissive: new THREE.Color(glowColor), emissiveIntensity: 0.4, roughness: 0.2 });
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.42, 0.03), screenMat);
+  screen.position.set(0, 1.19, -D/2+0.15);
+  g.add(screen);
+  const bezelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+  const bezel = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.47, 0.03), bezelMat);
+  bezel.position.set(0, 1.19, -D/2+0.12);
+  g.add(bezel);
+  const standMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4, metalness: 0.5 });
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8), standMat);
+  pole.position.set(0, 0.88, -D/2+0.15);
+  g.add(pole);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.03, 0.15), standMat);
+  base.position.set(0, 0.78, -D/2+0.15);
+  g.add(base);
+
+  // keyboard
+  const kbMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+  const kb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.17), kbMat);
+  kb.position.set(0, 0.79, 0);
+  g.add(kb);
+
+  return g;
+}
+
+// ── CHAIR FUNCTION ───────────────────────────────────────────────────────────
+function createChair(color) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.07, 0.48), mat);
+  seat.position.y = 0.46; seat.castShadow = true;
+  g.add(seat);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.46, 0.07), mat);
+  back.position.set(0, 0.72, 0.21); back.castShadow = true;
+  g.add(back);
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.2 });
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.43, 8), poleMat);
+  pole.position.y = 0.22;
+  g.add(pole);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 5), poleMat);
+  base.position.y = 0.02;
+  g.add(base);
+  return g;
+}
+
+// ── MII CHARACTER ────────────────────────────────────────────────────────────
+function createMii(bodyColor, hairColor, shirtColor) {
+  const g = new THREE.Group();
+  const skin = 0xffd5a8;
+  const skinM  = () => new THREE.MeshStandardMaterial({ color: skin, roughness: 0.8 });
+  const bodyM  = () => new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.8 });
+  const hairM  = () => new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.9 });
+  const darkM  = () => new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+  const whiteM = () => new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+  const pantsM = () => new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.8 });
+
+  // LEGS
+  const legGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.38, 10);
+  [-0.1, 0.1].forEach(lx => {
+    const leg = new THREE.Mesh(legGeo, pantsM());
+    leg.position.set(lx, 0.19, 0); leg.castShadow = true;
+    g.add(leg);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.21), darkM());
+    shoe.position.set(lx, 0.04, 0.03);
+    g.add(shoe);
+  });
+
+  // BODY (shirt)
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.52, 12), bodyM());
+  torso.position.y = 0.57; torso.castShadow = true;
+  g.add(torso);
+
+  // ARMS
+  [-1, 1].forEach(side => {
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.32, 8), bodyM());
+    upper.position.set(side * 0.28, 0.59, 0);
+    upper.rotation.z = side * -0.35;
+    upper.castShadow = true;
+    g.add(upper);
+    const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.28, 8), skinM());
+    lower.position.set(side * 0.35, 0.37, 0);
+    lower.rotation.z = side * -0.5;
+    lower.castShadow = true;
+    g.add(lower);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), skinM());
+    hand.position.set(side * 0.41, 0.23, 0);
+    g.add(hand);
+  });
+
+  // NECK
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.14, 10), skinM());
+  neck.position.y = 0.89;
+  g.add(neck);
+
+  // HEAD
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.27, 18, 18), skinM());
+  head.scale.set(1.05, 1.0, 1.0);
+  head.position.y = 1.14; head.castShadow = true;
+  g.add(head);
+
+  // HAIR (dome)
+  const hairDome = new THREE.Mesh(
+    new THREE.SphereGeometry(0.285, 16, 8, 0, Math.PI * 2, 0, Math.PI / 1.9),
+    hairM()
+  );
+  hairDome.position.y = 1.22;
+  g.add(hairDome);
+
+  // EYES (whites + pupils)
+  [-0.095, 0.095].forEach((ex, i) => {
+    const eyeW = new THREE.Mesh(new THREE.SphereGeometry(0.068, 12, 12), whiteM());
+    eyeW.position.set(ex, 1.17, 0.22); eyeW.scale.set(1, 0.85, 0.5);
+    g.add(eyeW);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.042, 10, 10), darkM());
+    pupil.position.set(ex, 1.165, 0.255);
+    g.add(pupil);
+    const shine = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1 }));
+    shine.position.set(ex + 0.02, 1.175, 0.268);
+    g.add(shine);
+  });
+
+  // EYEBROWS
+  [-0.095, 0.095].forEach(ex => {
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.02),
+      new THREE.MeshStandardMaterial({ color: hairColor, roughness: 1 }));
+    brow.position.set(ex, 1.22, 0.23);
+    brow.rotation.z = ex < 0 ? 0.15 : -0.15;
+    g.add(brow);
+  });
+
+  // NOSE
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), skinM());
+  nose.position.set(0, 1.1, 0.26); nose.scale.set(1, 0.8, 0.7);
+  g.add(nose);
+
+  // MOUTH (smile arc)
+  const smile = new THREE.Mesh(
+    new THREE.TorusGeometry(0.055, 0.013, 6, 14, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0xaa3333, roughness: 0.9 })
+  );
+  smile.position.set(0, 1.04, 0.245);
+  smile.rotation.z = Math.PI;
+  g.add(smile);
+
+  // CHEEKS (blush)
+  [-0.16, 0.16].forEach(cx => {
+    const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8),
+      new THREE.MeshStandardMaterial({ color: 0xff8888, transparent: true, opacity: 0.35, roughness: 1 }));
+    cheek.position.set(cx, 1.1, 0.24);
+    g.add(cheek);
+  });
+
+  // EARS
+  [-0.27, 0.27].forEach(ex => {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), skinM());
+    ear.position.set(ex, 1.13, 0);
+    g.add(ear);
+  });
+
+  g.traverse(c => { if (c.isMesh) c.castShadow = true; });
+  return g;
+}
+
+// ── FLOATING LABEL (canvas sprite) ───────────────────────────────────────────
+function makeLabel(name, role, color) {
+  const canvas2 = document.createElement('canvas');
+  canvas2.width = 256; canvas2.height = 70;
+  const ctx = canvas2.getContext('2d');
+  ctx.clearRect(0, 0, 256, 70);
+  ctx.fillStyle = 'rgba(8,8,20,0.88)';
+  ctx.roundRect(4, 4, 248, 62, 8);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.roundRect(4, 4, 248, 62, 8);
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 22px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, 128, 34);
+  ctx.fillStyle = color;
+  ctx.font = '14px Segoe UI';
+  ctx.fillText(role.toUpperCase(), 128, 55);
+
+  const tex = new THREE.CanvasTexture(canvas2);
+  const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(2.2, 0.6, 1);
+  return sprite;
+}
+
+// ── PLANT (for decoration) ───────────────────────────────────────────────────
+function addPlant(x, z) {
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.13, 0.28, 8),
+    new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.9 })
+  );
+  pot.position.set(x, 0.14, z);
+  pot.castShadow = true;
+  scene.add(pot);
+  const leaf = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 8, 8),
+    new THREE.MeshStandardMaterial({ color: 0x1a6620, roughness: 0.9 })
+  );
+  leaf.position.set(x, 0.55, z);
+  leaf.castShadow = true;
+  scene.add(leaf);
+}
+
+addPlant(-14, -9); addPlant(14, -9); addPlant(-14, 12); addPlant(14, 12);
+addPlant(-1, -9); addPlant(1, -9);
+
+// ── CENTRAL MEETING TABLE ───────────────────────────────────────────────────
+const meetMat = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: 0.3, metalness: 0.15 });
+const meetTable = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.1, 1.8), meetMat);
+meetTable.position.set(0, 0.74, -1);
+meetTable.castShadow = true; meetTable.receiveShadow = true;
+scene.add(meetTable);
+const meetLeg = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
+[[-1.8, -0.55], [1.8, -0.55], [-1.8, 0.55], [1.8, 0.55]].forEach(([lx, lz]) => {
+  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.72, 8), meetLeg);
+  leg.position.set(lx, 0.36, lz);
+  scene.add(leg);
+});
+// chairs around meeting table
+[-1.5, 0, 1.5].forEach(cx => {
+  ['front', 'back'].forEach(side => {
+    const ch = createChair(0x1a1a2e);
+    ch.position.set(cx, 0, side === 'front' ? 0.85 : -0.85);
+    if (side === 'back') ch.rotation.y = Math.PI;
+    scene.add(ch);
+  });
+});
+
+// ── ZONE SIGNS ───────────────────────────────────────────────────────────────
+function makeSign(text, color, x, y, z, rx = 0) {
+  const c2 = document.createElement('canvas');
+  c2.width = 320; c2.height = 60;
+  const ct = c2.getContext('2d');
+  ct.fillStyle = 'rgba(0,0,0,0)';
+  ct.fillRect(0, 0, 320, 60);
+  ct.fillStyle = color + 'cc';
+  ct.font = 'bold 26px Segoe UI';
+  ct.textAlign = 'center';
+  ct.textBaseline = 'middle';
+  ct.fillText(text, 160, 30);
+  const tex = new THREE.CanvasTexture(c2);
+  const m = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+  const s = new THREE.Sprite(m);
+  s.scale.set(3.5, 0.65, 1);
+  s.position.set(x, y, z);
+  scene.add(s);
+}
+makeSign('👔  CEO OFFICE',        '#ffd700', 9, 5, -7);
+makeSign('📋  SEGRETERIE',         '#4488ff', -6, 5, -7);
+makeSign('📣  MARKETING & SOCIAL', '#ff6666', -7, 5,  3);
+makeSign('💰  SALES & FINANCE',    '#66ff88',  5, 5,  3);
+makeSign('👥  OPS & LEGAL',        '#66ccff', -7, 5,  9);
+makeSign('💻  TECH & MIND',        '#cc88ff',  5, 5,  9);
+
+// ── PLACE AGENTS ─────────────────────────────────────────────────────────────
+const agentMeshes = [];  // { agent, group, mii }
+
+AGENTS.forEach(agent => {
+  const [ax, az] = POS[agent.id];
+  const isCEO = agent.id === 'luca';
+
+  const group = new THREE.Group();
+  group.position.set(ax, 0, az);
+  group.userData.agent = agent;
+
+  // desk
+  const desk = createDesk(agent.sc, isCEO);
+  desk.position.set(0, 0, -0.5);
+  group.add(desk);
+
+  // chair
+  const chair = createChair(new THREE.Color(agent.bc).multiplyScalar(0.7).getHex());
+  chair.position.set(0, 0, 0.6);
+  group.add(chair);
+
+  // Mii
+  const mii = createMii(agent.bc, agent.hc, agent.sc);
+  mii.position.set(0, 0, 0.45);
+  group.add(mii);
+
+  // floating label
+  const label = makeLabel(agent.name, agent.role, '#' + agent.sc.toString(16).padStart(6, '0'));
+  label.position.set(0, 2.6, 0);
+  group.add(label);
+
+  scene.add(group);
+  agentMeshes.push({ agent, group, mii });
+});
+
+// ── RAYCASTING ───────────────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let mouseDown = new THREE.Vector2();
+let hoveredAgent = null;
+let selectedAgent = null;
+const nametag = document.getElementById('nametag');
+
+function getIntersectedAgent(evt) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const targets = agentMeshes.map(a => a.group);
+  const hits = raycaster.intersectObjects(targets, true);
+  if (!hits.length) return null;
+  let obj = hits[0].object;
+  while (obj && !obj.userData.agent) obj = obj.parent;
+  return obj ? agentMeshes.find(a => a.group === obj) : null;
+}
+
+canvas.addEventListener('mousedown', e => { mouseDown.set(e.clientX, e.clientY); });
+canvas.addEventListener('mouseup', e => {
+  const moved = Math.abs(e.clientX - mouseDown.x) + Math.abs(e.clientY - mouseDown.y) > 5;
+  if (moved) return;
+  const hit = getIntersectedAgent(e);
+  if (hit) { selectedAgent = hit.agent; openChat(hit.agent); }
+  else { selectedAgent = null; }
+});
+canvas.addEventListener('mousemove', e => {
+  const hit = getIntersectedAgent(e);
+  hoveredAgent = hit ? hit.agent : null;
+  if (hit) {
+    nametag.style.display = 'block';
+    nametag.style.left = (e.clientX + 14) + 'px';
+    nametag.style.top  = (e.clientY - 10) + 'px';
+    document.getElementById('nn').textContent = hit.agent.emoji + ' ' + hit.agent.name;
+    document.getElementById('nr').textContent = hit.agent.role;
+    canvas.style.cursor = 'pointer';
+  } else {
+    nametag.style.display = 'none';
+    canvas.style.cursor = '';
+  }
+});
+
+// ── ANIMATION ────────────────────────────────────────────────────────────────
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.016;
+  controls.update();
+
+  // Resize
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (renderer.domElement.width !== W || renderer.domElement.height !== H) {
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+  }
+
+  // Idle bob + highlight
+  agentMeshes.forEach(({ agent, group, mii }) => {
+    const hi = hoveredAgent === agent || selectedAgent === agent;
+    mii.position.y = Math.sin(t * 1.5 + group.position.x) * 0.03 + (hi ? 0.12 : 0);
+    mii.rotation.y = hi ? Math.sin(t * 2) * 0.15 : 0;
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── SIDEBAR ──────────────────────────────────────────────────────────────────
+let activeTab = 'team';
+let chatHistory = {};
+
+// ── SHOPIFY CONFIG ──────────────────────────────────────────────────────────
+const SHOPIFY_SHOP = 'hinkz5-ia.myshopify.com';
+const SHOPIFY_TOKEN = localStorage.getItem('st') || '';
+
+async function shopifyFetch(endpoint, method = 'GET', body = null) {
+  // Usa sempre il proxy Vercel /api/shopify (funziona online e in locale con vercel dev)
+  const url = `/api/shopify?endpoint=${encodeURIComponent(endpoint)}`;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+async function creaProddottoShopify(nome, descrizione, prezzo, tags = '') {
+  const data = await shopifyFetch('products.json', 'POST', {
+    product: {
+      title: nome,
+      body_html: descrizione,
+      vendor: 'Verterix',
+      product_type: 'Prodotto Digitale',
+      tags: 'AI, digitale, ' + tags,
+      status: 'active',
+      variants: [{ price: prezzo.toString(), requires_shipping: false, taxable: true }]
+    }
+  });
+  return data.product;
+}
+
+async function fetchShopifyData() {
+  try {
+    const [ordersData, productsData] = await Promise.all([
+      shopifyFetch('orders.json?status=any&limit=250'),
+      shopifyFetch('products.json?status=active&limit=50')
+    ]);
+
+    const orders = ordersData.orders || [];
+    const products = productsData.products || [];
+
+    // Calcola dati ultimi 7 giorni
+    const oggi = new Date();
+    const storico = [0,0,0,0,0,0,0];
+    let totGuadagni = 0, totVendite = 0;
+
+    orders.forEach(o => {
+      const importo = parseFloat(o.total_price || 0);
+      totGuadagni += importo;
+      totVendite++;
+      const data = new Date(o.created_at);
+      const diffDays = Math.floor((oggi - data) / 86400000);
+      if (diffDays < 7) {
+        const idx = 6 - diffDays;
+        storico[idx] += importo;
+      }
+    });
+
+    dash.guadagni = totGuadagni;
+    dash.vendite = totVendite;
+    dash.storico = storico;
+    dash.prodotti = products.map(p => ({
+      nome: p.title,
+      stato: 'attivo',
+      vendite: 0,
+      guadagni: 0,
+      prezzo: parseFloat(p.variants?.[0]?.price || 0),
+      id: p.id
+    }));
+
+    // Aggiorna topbar
+    document.querySelector('.kpis .kpi:first-child .val').textContent = '€' + totGuadagni.toFixed(0);
+    addLog(`📊 Shopify sync: ${totVendite} ordini · ${products.length} prodotti · €${totGuadagni.toFixed(2)} totale`);
+    if (activeTab === 'report') render();
+  } catch(e) {
+    addLog('⚠ Errore sync Shopify: ' + e.message);
+  }
+}
+
+// ── DASHBOARD DATA ──────────────────────────────────────────────────────────
+let dash = {
+  vendite: 0, guadagni: 0, uscite: { shopify: 27, make: 9, dominio: 1, ads: 63 },
+  prodotti: [],
+  budgetAds: 63, adsSpesi: 0, conversioni: 0, visitatori: 0,
+  storico: [0, 0, 0, 0, 0, 0, 0]
+};
+
+function totUscite() {
+  return Object.values(dash.uscite).reduce((a,b) => a+b, 0);
+}
+function profittoNetto() {
+  return dash.guadagni - totUscite();
+}
+
+function renderReport() {
+  const profit = profittoNetto();
+  const budgetRim = dash.budgetAds - dash.adsSpesi;
+  const maxBar = Math.max(...dash.storico, 1);
+
+  return `
+  <div class="dkpi"><div class="dkpi-icon">💰</div><div class="dkpi-info">
+    <div class="dkpi-val" style="color:#2ecc71">€${dash.guadagni.toFixed(2)}</div>
+    <div class="dkpi-lbl">Guadagni totali</div>
+    <div class="dkpi-diff ${dash.guadagni>0?'up':'neu'}">${dash.guadagni>0?'▲ In crescita':'— Nessuna vendita ancora'}</div>
+  </div></div>
+
+  <div class="dkpi"><div class="dkpi-icon">🛒</div><div class="dkpi-info">
+    <div class="dkpi-val" style="color:#6c63ff">${dash.vendite}</div>
+    <div class="dkpi-lbl">Vendite totali</div>
+    <div class="dkpi-diff neu">Conversioni: ${dash.conversioni} | Visitatori: ${dash.visitatori}</div>
+  </div></div>
+
+  <div class="dkpi"><div class="dkpi-icon">${profit>=0?'📈':'📉'}</div><div class="dkpi-info">
+    <div class="dkpi-val" style="color:${profit>=0?'#2ecc71':'#e74c3c'}">€${profit.toFixed(2)}</div>
+    <div class="dkpi-lbl">Profitto netto</div>
+    <div class="dkpi-diff ${profit>=0?'up':'dn'}">Guadagni €${dash.guadagni.toFixed(0)} — Uscite €${totUscite()}</div>
+  </div></div>
+
+  <div class="dkpi"><div class="dkpi-icon">📤</div><div class="dkpi-info">
+    <div class="dkpi-val" style="color:#e74c3c">€${totUscite()}</div>
+    <div class="dkpi-lbl">Uscite mensili</div>
+    <div class="dkpi-diff neu">Shopify €${dash.uscite.shopify} · Make €${dash.uscite.make} · Dom €${dash.uscite.dominio} · Ads €${dash.uscite.ads}</div>
+  </div></div>
+
+  <div class="dkpi"><div class="dkpi-icon">🎯</div><div class="dkpi-info">
+    <div class="dkpi-val" style="color:#f1c40f">€${budgetRim.toFixed(2)}</div>
+    <div class="dkpi-lbl">Budget ads rimanente</div>
+    <div class="dkpi-diff ${budgetRim<15?'dn':'up'}">Spesi €${dash.adsSpesi.toFixed(2)} di €${dash.budgetAds}</div>
+  </div></div>
+
+  <div class="dbar-wrap">
+    <div class="dbar-title">📦 Prodotti (${dash.prodotti.length})</div>
+    ${dash.prodotti.map((p,i) => `
+      <div class="dprod">
+        <div class="dprod-top">
+          <div class="dprod-name">${p.nome}</div>
+          <div class="dprod-badge ${p.stato}">${p.stato==='attivo'?'✓ Attivo':p.stato==='test'?'⏳ Test':'✗ Stop'}</div>
+        </div>
+        <div class="dprod-stats">
+          <div class="dprod-stat">💶 <span>€${p.prezzo}</span></div>
+          <div class="dprod-stat">🛒 <span>${p.vendite} vend.</span></div>
+          <div class="dprod-stat">💰 <span>€${p.guadagni.toFixed(0)}</span></div>
+        </div>
+      </div>`).join('')}
+    <button class="dbtn" onclick="nuovoProdottoShopify()" style="background:#2ecc71;margin-bottom:4px">🛍 Crea prodotto su Shopify</button>
+    <button class="dbtn" onclick="fetchShopifyData()" style="background:#1a1a2e;border:1px solid #6c63ff;color:#6c63ff">🔄 Sincronizza con Shopify</button>
+  </div>
+
+  <div class="dbar-wrap">
+    <div class="dbar-title">📊 Vendite ultimi 7 giorni</div>
+    ${['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map((g,i) => `
+      <div class="dbar-row">
+        <div class="dbar-name">${g}</div>
+        <div class="dbar-track"><div class="dbar-fill" style="width:${dash.storico[i]/maxBar*100}%;background:#6c63ff"></div></div>
+        <div class="dbar-num">€${dash.storico[i].toFixed(0)}</div>
+      </div>`).join('')}
+  </div>
+
+  <div class="dedit-wrap">
+    <div class="dedit-title">✏ Aggiorna dati</div>
+    <div class="dedit-row"><div class="dedit-lbl">Nuova vendita</div>
+      <input class="dedit-inp" id="inp-vend" type="number" placeholder="€ importo" min="0"/>
+      <div class="dedit-unit">€</div></div>
+    <div class="dedit-row"><div class="dedit-lbl">Ads spesi oggi</div>
+      <input class="dedit-inp" id="inp-ads" type="number" placeholder="€" min="0"/>
+      <div class="dedit-unit">€</div></div>
+    <div class="dedit-row"><div class="dedit-lbl">Visitatori oggi</div>
+      <input class="dedit-inp" id="inp-vis" type="number" placeholder="n." min="0"/>
+      <div class="dedit-unit">#</div></div>
+    <button class="dbtn" onclick="aggiornaReport()">✓ Salva aggiornamento</button>
+  </div>`;
+}
+
+window.aggiornaReport = () => {
+  const vend = parseFloat(document.getElementById('inp-vend')?.value) || 0;
+  const ads  = parseFloat(document.getElementById('inp-ads')?.value)  || 0;
+  const vis  = parseInt(document.getElementById('inp-vis')?.value)    || 0;
+  const oggi = new Date().getDay();
+  const idx  = oggi === 0 ? 6 : oggi - 1;
+  if (vend > 0) {
+    dash.guadagni += vend;
+    dash.vendite  += 1;
+    dash.conversioni += 1;
+    dash.storico[idx] = (dash.storico[idx] || 0) + vend;
+    if (dash.prodotti.length) { dash.prodotti[0].vendite++; dash.prodotti[0].guadagni += vend; }
+    addLog(`Nuova vendita registrata: €${vend.toFixed(2)}`);
+  }
+  if (ads > 0)  { dash.adsSpesi += ads; addLog(`Ads spesi: €${ads.toFixed(2)}`); }
+  if (vis > 0)  { dash.visitatori += vis; }
+  // update topbar
+  document.querySelector('.kpis .kpi:first-child .val').textContent = '€' + dash.guadagni.toFixed(0);
+  render();
+};
+
+window.addProdotto = () => {
+  const nome = prompt('Nome del prodotto:');
+  if (!nome) return;
+  const prezzo = parseFloat(prompt('Prezzo (€):')) || 0;
+  dash.prodotti.push({ nome, stato: 'test', vendite: 0, guadagni: 0, prezzo });
+  addLog(`Nuovo prodotto aggiunto: ${nome} (€${prezzo})`);
+  render();
+};
+
+let logs = [
+  { t:'09:00', m:'Sistema avviato. 12 agenti operativi.' },
+  { t:'09:01', m:'Luca: analisi mercato prodotti digitali AI in corso.' },
+  { t:'09:02', m:'Davide: ricerca nicchie profittevoli avviata.' },
+  { t:'09:03', m:'Marco: calendario contenuti TikTok in preparazione.' },
+  { t:'09:05', m:'Roberto: budget €100/mese confermato. Ads: €63.' },
+];
+
+window.switchTab = function(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.stab').forEach(s => s.classList.remove('active'));
+  document.getElementById('t-' + tab).classList.add('active');
+  render();
+}
+
+function render() {
+  const el = document.getElementById('scontent');
+  if (activeTab === 'team') {
+    el.innerHTML = AGENTS.map(a => `
+      <div class="acard ${selectedAgent?.id === a.id ? 'sel' : ''}" onclick="clickAgent('${a.id}')">
+        <div class="atop">
+          <div class="aemoji">${a.emoji}</div>
+          <div><div class="aname">${a.name}</div><div class="arole">${a.role}</div></div>
+          <div class="adot"></div>
+        </div>
+        <div class="atask">${a.tasks}</div>
+      </div>`).join('');
+  } else if (activeTab === 'chat') {
+    const a = selectedAgent;
+    if (!a) {
+      el.innerHTML = `<div style="color:#333;text-align:center;margin-top:50px;font-size:12px">Clicca su un agente<br>nell'ufficio o nel team</div>`;
+    } else {
+      const msgs = chatHistory[a.id] || [];
+      el.innerHTML = `
+        <div id="chat-wrap">
+          <div id="chat-hdr">
+            <div class="ce">${a.emoji}</div>
+            <div><div class="cn">${a.name}</div><div class="cr">${a.role}</div></div>
+            <button onclick="clearChat()">✕</button>
+          </div>
+          <div id="chat-msgs" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;max-height:calc(100vh - 260px);min-height:120px">
+            ${msgs.length ? msgs.map(m=>`<div class="msg ${m.r}">${m.c}</div>`).join('') : `<div class="msg a">${a.emoji} Ciao! Sono ${a.name}. Come posso aiutarti?</div>`}
+          </div>
+          <div id="chat-inp-wrap">
+            <textarea id="chat-inp" placeholder="Scrivi..." onkeydown="handleKey(event)"></textarea>
+            <button id="chat-send" onclick="sendMsg()">➤</button>
+          </div>
+        </div>`;
+      setTimeout(() => { const m = document.getElementById('chat-msgs'); if(m) m.scrollTop = m.scrollHeight; }, 30);
+    }
+  } else if (activeTab === 'report') {
+    el.innerHTML = renderReport();
+  } else {
+    el.innerHTML = logs.slice().reverse().map(l => `
+      <div class="logitem">
+        <div class="logtime">${l.t}</div>
+        <div class="logmsg">${l.m}</div>
+      </div>`).join('');
+  }
+}
+
+window.clickAgent = id => {
+  selectedAgent = AGENTS.find(a => a.id === id);
+  openChat(selectedAgent);
+};
+
+window.openChat = agent => {
+  selectedAgent = agent;
+  switchTab('chat');
+  addLog(`Chat aperta con ${agent.name}`);
+};
+
+window.clearChat = () => { selectedAgent = null; render(); };
+
+window.handleKey = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } };
+
+window.sendMsg = async () => {
+  const inp = document.getElementById('chat-inp');
+  const text = inp?.value?.trim();
+  if (!text || !selectedAgent) return;
+  const key = localStorage.getItem('ak');
+  if (!key) { openSettings(); return; }
+
+  inp.value = '';
+  if (!chatHistory[selectedAgent.id]) chatHistory[selectedAgent.id] = [];
+  chatHistory[selectedAgent.id].push({ r:'u', c: text });
+
+  const btn = document.getElementById('chat-send');
+  if (btn) btn.disabled = true;
+
+  chatHistory[selectedAgent.id].push({ r:'a', c:'…' });
+  render();
+
+  try {
+    const messages = chatHistory[selectedAgent.id]
+      .filter(m => m.c !== '…')
+      .map(m => ({ role: m.r === 'u' ? 'user' : 'assistant', content: m.c }));
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: selectedAgent.prompt,
+        messages
+      })
+    });
+    const data = await res.json();
+    const reply = data?.content?.[0]?.text || 'Errore nella risposta.';
+    chatHistory[selectedAgent.id] = chatHistory[selectedAgent.id].filter(m => m.c !== '…');
+    chatHistory[selectedAgent.id].push({ r:'a', c: reply });
+    addLog(`${selectedAgent.name}: ${reply.slice(0,55)}…`);
+  } catch {
+    chatHistory[selectedAgent.id] = chatHistory[selectedAgent.id].filter(m => m.c !== '…');
+    chatHistory[selectedAgent.id].push({ r:'a', c:'⚠ Errore. Controlla la API key in Impostazioni.' });
+  }
+  render();
+};
+
+function addLog(m) {
+  const now = new Date();
+  logs.push({ t: now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0'), m });
+  if (logs.length > 60) logs.shift();
+}
+
+// ── SETTINGS ────────────────────────────────────────────────────────────────
+window.openSettings = () => {
+  const k = localStorage.getItem('ak') || '';
+  const s = localStorage.getItem('st') || '';
+  document.getElementById('akey').value = k;
+  document.getElementById('skey').value = s;
+  const ks = document.getElementById('ks');
+  ks.textContent = k ? '✓ Chiave salvata' : 'Nessuna chiave';
+  ks.className = 'ks ' + (k ? 'ok' : 'no');
+  const ss = document.getElementById('ss');
+  ss.textContent = s ? '✓ Token Shopify salvato' : 'Nessun token Shopify';
+  ss.className = 'ks ' + (s ? 'ok' : 'no');
+  document.getElementById('settings-modal').classList.add('open');
+};
+window.closeSettings = () => document.getElementById('settings-modal').classList.remove('open');
+window.saveKey = () => {
+  const k = document.getElementById('akey').value.trim();
+  const s = document.getElementById('skey').value.trim();
+  if (k) { localStorage.setItem('ak', k); document.getElementById('ks').textContent = '✓ Salvata!'; document.getElementById('ks').className = 'ks ok'; }
+  if (s) { localStorage.setItem('st', s); document.getElementById('ss').textContent = '✓ Shopify salvato!'; document.getElementById('ss').className = 'ks ok'; }
+  setTimeout(() => { closeSettings(); if (s) fetchShopifyData(); }, 700);
+};
+document.getElementById('settings-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('settings-modal')) closeSettings();
+});
+
+// ── CREA PRODOTTO SHOPIFY DA UI ─────────────────────────────────────────────
+window.nuovoProdottoShopify = async () => {
+  const nome = prompt('Nome prodotto (es: Corso AI Avanzato):');
+  if (!nome) return;
+  const prezzo = parseFloat(prompt('Prezzo in €:')) || 19;
+  const descrizione = prompt('Breve descrizione:') || 'Prodotto digitale AI creato da Verterix.';
+  addLog(`⏳ Creazione prodotto "${nome}" su Shopify...`);
+  try {
+    const prod = await creaProddottoShopify(nome, `<p>${descrizione}</p>`, prezzo);
+    addLog(`✅ Prodotto creato: "${prod.title}" a €${prezzo} — ID: ${prod.id}`);
+    await fetchShopifyData();
+  } catch(e) {
+    addLog('❌ Errore creazione: ' + e.message);
+  }
+};
+
+// ── AGENTE CEO: CREAZIONE AUTONOMA ──────────────────────────────────────────
+// Dopo ogni risposta del CEO, controlla se vuole creare un prodotto
+async function parseAgentAction(agentId, reply) {
+  if (agentId !== 'luca') return;
+  const match = reply.match(/CREA_PRODOTTO\[([^\]]+)\|([^\]]+)\|(\d+(?:\.\d+)?)\]/);
+  if (match) {
+    const [, nome, desc, prezzo] = match;
+    addLog(`🤖 Luca ordina creazione prodotto: "${nome}" a €${prezzo}`);
+    try {
+      const prod = await creaProddottoShopify(nome, `<p>${desc}</p>`, parseFloat(prezzo));
+      addLog(`✅ Agente ha creato: "${prod.title}" su Shopify!`);
+      await fetchShopifyData();
+    } catch(e) {
+      addLog('❌ Errore creazione autonoma: ' + e.message);
+    }
+  }
+}
+
+// Wrap sendMsg per intercettare azioni agenti
+const _origSend = window.sendMsg;
+window.sendMsg = async function() {
+  await _origSend();
+  // dopo che la risposta è arrivata, controlla azioni
+  if (selectedAgent && chatHistory[selectedAgent.id]) {
+    const last = chatHistory[selectedAgent.id].filter(m => m.r === 'a').slice(-1)[0];
+    if (last) await parseAgentAction(selectedAgent.id, last.c);
+  }
+};
+
+// init
+render();
+fetchShopifyData();
+setInterval(fetchShopifyData, 5 * 60 * 1000); // refresh ogni 5 min
+if (!localStorage.getItem('ak')) setTimeout(openSettings, 800);
+</script>
+</body>
+</html>
