@@ -1,6 +1,11 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/", "destination": "/verterix-hq.html" }
+  "builds": [
+    { "src": "api/shopify.js", "use": "@vercel/node" },
+    { "src": "verterix-hq.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/shopify", "dest": "/api/shopify.js" },
+    { "src": "/", "dest": "/verterix-hq.html" }
   ]
 }
